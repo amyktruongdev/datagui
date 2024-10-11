@@ -6,10 +6,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Load default CSV file
-# df = pd.read_csv('peter_testovertemp.csv')
 df = pd.DataFrame()
-df.to_csv('meow.csv', index=False)
-
+# df.to_excel('updated.xlsx', index=True)
 
 # Create a list of columns
 columns = list(df.columns)
@@ -103,6 +101,59 @@ def plot_selected_columns():
         main_textbox.insert(END, "Please select exactly two columns to plot!")
 
 
+def addColumns():
+    selected_columns = listbox.curselection()
+    selected_columns = [listbox.get(i) for i in selected_columns]
+
+    if len(selected_columns) == 2:
+        col1_name = selected_columns[0]
+        col2_name = selected_columns[1]
+
+        try:
+            col1_data = df[col1_name]
+            col2_data = df[col2_name]
+
+            # Add the two selected columns element-wise and create a new column in the DataFrame
+            df['New_Column'] = col1_data + col2_data
+            df.to_excel('updated_with_new_column.xlsx', index=True)
+            main_textbox.delete(1.0, END)
+
+            # Display confirmation and the new column in the textbox
+            main_textbox.insert(
+                END, f"New Column ('New_Column') added successfully:\n\n{df['New_Column']}")
+        except Exception as e:
+            # Handle any potential errors and display them in the textbox
+            main_textbox.delete(1.0, END)
+            main_textbox.insert(END, f"Error while adding columns: {str(e)}")
+    else:
+        main_textbox.delete(1.0, END)
+        main_textbox.insert(END, "Please select exactly two columns to add.")
+
+
+def deleteColumn(combo):
+    global df
+    selected_column = combo.get()
+    if selected_column:
+        # Specify axis=1 to drop a column
+        df = df.drop([selected_column], axis=1)
+        columns.remove(selected_column)  # Update the list of columns
+
+        # Update the comboboxes and listbox with new column names
+        combo_tab1['values'] = columns
+        combo_tab3['values'] = columns
+        listbox.delete(0, END)  # Clear existing entries in the listbox
+        for col in columns:
+            listbox.insert(END, col)
+        combo.set('')
+        df.to_excel('updated_with_new_column.xlsx', index=True)
+        main_textbox.delete(1.0, END)
+        main_textbox.insert(
+            END, f"Column '{selected_column}' deleted successfully.")
+    else:
+        main_textbox.delete(1.0, END)
+        main_textbox.insert(END, "No column selected!")
+
+
 # Create the main window
 main_window = tk.Tk()
 main_window.config(width=1000, height=1000)
@@ -145,6 +196,16 @@ listbox = Listbox(tab2, selectmode=MULTIPLE, height=10)
 for col in columns:
     listbox.insert(END, col)
 listbox.place(x=50, y=10)
+
+button_delete = ttk.Button(
+    tab1, text="Delete Column", command=lambda: deleteColumn(combo_tab1)
+)
+button_delete.place(x=370, y=50)
+
+button_add = ttk.Button(
+    tab2, text="Add Columns", command=addColumns
+)
+button_add.place(x=465, y=85)
 
 # Plot button in tab2
 button_plot = ttk.Button(
